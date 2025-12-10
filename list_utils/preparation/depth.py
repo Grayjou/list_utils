@@ -1,6 +1,6 @@
 from ..validation.depth import get_max_depth
 from ..validation.type_checks import is_strict_container
-from typing import Any, List, Literal
+from typing import Any, List, Literal, Dict, Union
 from enum import Enum, auto
 
 
@@ -306,3 +306,5 @@ def _fix_exact_depth(
         _fix_exact_depth(item, depth - 1, str_depth, bytes_depth)
         for item in x
     ]
+
+
