@@ -1,0 +1,13 @@
+tests/preparation/test_depth.py::TestInsideOutMode::test_empty_container
+E   assert [] == [[]]
+      
+      Right contains one more item: [0m[][90m[39;49;00m
+      Use -v to get more diff
+
+tests/preparation/test_depth.py::TestInsideOutMode::test_nested_empty_containers
+E   assert [[], []] == [[[], []]]
+      
+      At index 0 diff: [0m[][90m[39;49;00m != [0m[[], []][90m[39;49;00m
+      Left contains one more item: [0m[][90m[39;49;00m
+      Use -v to get more diff
+

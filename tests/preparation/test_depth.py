@@ -88,13 +88,32 @@ class TestInsideOutMode:
         assert result == [[[1]], [[2]], [[3]]]
     
     def test_empty_container(self):
-        """Empty containers get wrapped appropriately."""
+        """Empty containers with inside-out mode stay empty."""
+        # Inside-out mode recurses into elements. Empty container has no elements,
+        # so it remains empty regardless of target depth.
         result = ensure_uniform_depth([], 2, inside_out=True)
         assert result == []
     
+    def test_empty_container_outside_in(self):
+        """Empty containers outside-in mode."""
+        # [] has depth 1, wrapping to 2
+        result = ensure_uniform_depth([], 2, inside_out=False)
+        assert result == [[]]
+        
+        # [] has depth 1, already at target
+        result = ensure_uniform_depth([], 1, inside_out=False)
+        assert result == []
+    
     def test_nested_empty_containers(self):
-        """Nested empty containers."""
+        """Nested empty containers with inside-out mode."""
+        # Inside-out recurses into elements: for each empty list, it tries to recurse
+        # with depth-1, but empty containers have no elements to process.
+        # Result: the structure stays as [[], []]
         result = ensure_uniform_depth([[], []], 3, inside_out=True)
+        assert result == [[], []]
+        
+        # [[], []] already at depth 2, no change
+        result = ensure_uniform_depth([[], []], 2, inside_out=True)
         assert result == [[], []]
 
 
@@ -394,6 +413,93 @@ class TestComplexScenarios:
         # Wrap to depth 7
         result = ensure_uniform_depth(data, 7, inside_out=False)
         assert result == [[[[[[[1]]]]]]]
+
+
+# ============================================================================
+# Tests for empty containers (depth 1 behavior)
+# ============================================================================
+
+class TestEmptyContainers:
+    """Tests for empty container handling - empty containers have depth 1."""
+    
+    def test_empty_list_depth_one(self):
+        """Empty list is at depth 1."""
+        # Wrapping [] to depth 2
+        result = ensure_uniform_depth([], 2, inside_out=False)
+        assert result == [[]]
+    
+    def test_empty_tuple_depth_one(self):
+        """Empty tuple is at depth 1."""
+        result = ensure_uniform_depth((), 2, inside_out=False)
+        assert result == [()]
+    
+    def test_empty_set_depth_one(self):
+        """Empty set is at depth 1."""
+        result = ensure_uniform_depth(set(), 2, inside_out=False)
+        assert result == [set()]
+    
+    def test_empty_dict_depth_one(self):
+        """Empty dict is at depth 1."""
+        result = ensure_uniform_depth({}, 2, inside_out=False)
+        assert result == [{}]
+    
+    def test_empty_container_exact_depth_outside_in(self):
+        """Empty container at exact target depth outside-in."""
+        # [] at depth 1, target depth 1
+        result = ensure_uniform_depth([], 1, inside_out=False)
+        assert result == []
+    
+    def test_empty_container_exact_depth_inside_out(self):
+        """Empty container at exact target depth inside-out."""
+        # [] at depth 1, target depth 1
+        result = ensure_uniform_depth([], 1, inside_out=True)
+        assert result == []
+    
+    def test_empty_container_unwrap(self):
+        """Cannot unwrap empty containers to depth 0."""
+        with pytest.raises(ValueError, match="Expected single-item container|Cannot reduce depth"):
+            ensure_uniform_depth([], 0, inside_out=False)
+    
+    def test_nested_empty_containers_depth(self):
+        """Nested empty containers have depth 2."""
+        # [[], []] has depth 2
+        # Wrapping to 3
+        result = ensure_uniform_depth([[], []], 3, inside_out=False)
+        assert result == [[[], []]]
+    
+    def test_nested_empty_containers_exact_depth(self):
+        """Nested empty containers at exact depth."""
+        # [[], []] at depth 2, target 2
+        result = ensure_uniform_depth([[], []], 2, inside_out=False)
+        assert result == [[], []]
+    
+    def test_empty_inside_list(self):
+        """Empty container inside a list."""
+        # [[]] has depth 2
+        # Wrapping to 3
+        result = ensure_uniform_depth([[]], 3, inside_out=False)
+        assert result == [[[]]]
+    
+    def test_mixed_empty_and_full_containers(self):
+        """Mix of empty and non-empty containers."""
+        # [[], [1]] has depth 2 (both elements at depth 1)
+        # Target depth 2
+        result = ensure_uniform_depth([[], [1]], 2, inside_out=False)
+        assert result == [[], [1]]
+    
+    def test_empty_inside_out_wrapping(self):
+        """Empty container with inside-out mode stays empty."""
+        # Inside-out mode doesn't wrap empty containers because it recurses into
+        # elements. Empty container has no elements to recurse into, so result is empty.
+        result = ensure_uniform_depth([], 3, inside_out=True)
+        assert result == []
+    
+    def test_empty_mixed_depth_inside_out(self):
+        """Mixed empty and non-empty inside-out."""
+        # [[], 1] has elements at different depths (1 for [], 0 for 1)
+        # Target depth 2 inside-out: [] stays [], 1 becomes [1]
+        result = ensure_uniform_depth([[], 1], 2, inside_out=True)
+        assert result == [[], [1]]
 
 
 # ============================================================================
